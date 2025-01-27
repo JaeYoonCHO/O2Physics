@@ -680,7 +680,7 @@ struct HfCandidateCreatorXicToXiPiPiExpressions {
 	registry.get<TH1>(HIST("TEST_GenPtlFinding"))->GetXaxis()->SetBinLabel(12+1, "Prompt reso + dir");
 	registry.get<TH1>(HIST("TEST_GenPtlFinding"))->GetXaxis()->SetBinLabel(13+1, "Non prompt reso + dir");
 	registry.get<TH1>(HIST("TEST_GenPtlFinding"))->GetXaxis()->SetBinLabel(14+1, "");
-	registry.get<TH1>(HIST("TEST_GenPtlFinding"))->GetXaxis()->SetBinLabel(15+1, "");
+	registry.get<TH1>(HIST("TEST_GenPtlFinding"))->GetXaxis()->SetBinLabel(15+1, "Xic to p pi pi pi pi");
 	registry.get<TH1>(HIST("TEST_GenPtlFinding"))->GetXaxis()->SetBinLabel(16+1, "");
 	registry.get<TH1>(HIST("TEST_GenPtlFinding"))->GetXaxis()->SetBinLabel(17+1, "");
 
@@ -797,6 +797,11 @@ struct HfCandidateCreatorXicToXiPiPiExpressions {
 	  arrDaughLambda.clear();	// TEST for num of daughters check
 	  arrDaughXi.clear();	// TEST for num of daughters check
 
+	  // Xic -> p pi pi pi pi?
+	  if (RecoDecay::isMatchedMCGen(mcParticles, particle, Pdg::kXiCPlus, std::array{+kXiMinus, +kPiPlus, +kPiPlus, +kPiMinus, +kPiMinus, +kProton}, true, nullptr, 5)) {
+		registry.fill(HIST("TEST_GenPtlFinding"), 15); 
+	  }
+
       //  Xic → Xi pi pi
       if (RecoDecay::isMatchedMCGen(mcParticles, particle, Pdg::kXiCPlus, std::array{+kXiMinus, +kPiPlus, +kPiPlus}, true, nullptr, 2)) {
         debug = 1;
@@ -816,13 +821,19 @@ struct HfCandidateCreatorXicToXiPiPiExpressions {
 		//cout << "END Looping over Xic+ daughter ID" << endl;
         // Xi- -> Lambda pi
 		auto cascMC = mcParticles.rawIteratorAt(particle.daughtersIds().front());
-		if(arrDaughNum.size()==3){	// Xic to Xi pi pi
+        if(arrDaughNum.size()==2){
+            auto cascStarMC = mcParticles.rawIteratorAt(particle.daughtersIds().front());
+            if(RecoDecay::isMatchedMCGen<false, true>(mcParticles, cascStarMC, +3324, std::array{+kXiMinus, +kPiPlus}, true)){
+                cascMC = mcParticles.rawIteratorAt(cascStarMC.daughtersIds().front());
+            }
+        }
+/*		if(arrDaughNum.size()==3){	// Xic to Xi pi pi
 	        cascMC = mcParticles.rawIteratorAt(particle.daughtersIds().front());
 			cout << "START : Xic+ num of dau is 3 and its first dau is "<< cascMC.pdgCode() << endl;
 		}else{	// Xic to Xi* pi
 			auto cascStarMC = mcParticles.rawIteratorAt(particle.daughtersIds().front());
 			cout << "START : Xic+ num of dau is 2 and its first dau is " << cascStarMC.pdgCode() << endl;
-			if(RecoDecay::isMatchedMCGen<false, true>(mcParticles, cascStarMC, +3324, std::array{+kXiMinus, +kPiPlus}, true, nullptr, 2)){
+			if(RecoDecay::isMatchedMCGen<false, true>(mcParticles, cascStarMC, +3324, std::array{+kXiMinus, +kPiPlus}, true)){
 				cascMC = mcParticles.rawIteratorAt(cascStarMC.daughtersIds().front());
 				cout << "START : Xi* to Xi pi+ found" << endl;
 			}else{
@@ -830,7 +841,7 @@ struct HfCandidateCreatorXicToXiPiPiExpressions {
 				cout << "START : Xi* not found and assigned cascMC is " << cascMC.pdgCode() << endl;
 			}
 		}
-
+*/
 		registry.fill(HIST("TEST_XicPlusFirstDauID"),cascMC.pdgCode());	// TEST hist of Xic+ first dau 
         if (RecoDecay::isMatchedMCGen<false, true>(mcParticles, cascMC, std::abs(cascMC.pdgCode()), std::array{+kLambda0, +kPiMinus}, true)) {
           debug = 2;
