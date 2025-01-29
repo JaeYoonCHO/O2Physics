@@ -682,7 +682,7 @@ struct HfCandidateCreatorXicToXiPiPiExpressions {
 	registry.get<TH1>(HIST("TEST_GenPtlFinding"))->GetXaxis()->SetBinLabel(14+1, "");
 	registry.get<TH1>(HIST("TEST_GenPtlFinding"))->GetXaxis()->SetBinLabel(15+1, "Xic to p pi pi pi pi");
 	registry.get<TH1>(HIST("TEST_GenPtlFinding"))->GetXaxis()->SetBinLabel(16+1, "");
-	registry.get<TH1>(HIST("TEST_GenPtlFinding"))->GetXaxis()->SetBinLabel(17+1, "");
+	registry.get<TH1>(HIST("TEST_GenPtlFinding"))->GetXaxis()->SetBinLabel(17+1, "Start gen loop");
 
 	registry.add("TEST_CheckNumOfDaughters", "TEST_CheckNumOfDaughters", {HistType::kTH1F, {{40, 0, 20}}});
 	registry.add("TEST_CheckNumOfDaughters_reso", "TEST_CheckNumOfDaughters_reso", {HistType::kTH1F, {{40, 0, 20}}});
@@ -699,6 +699,15 @@ struct HfCandidateCreatorXicToXiPiPiExpressions {
 
 	registry.add("TEST_XicPlusY", "TEST_XicPlusY", {HistType::kTH1F, {{100, -5., 5.}}});
 	registry.add("TEST_XicPlusY_promptOrNonprompt", "TEST_XicPlusY_promptOrNonprompt", {HistType::kTH1F, {{100, -5., 5.}}});
+
+	// 
+	registry.add("TEST_RecPtlFinding", "TEST_RecPtlFinding", {HistType::kTH1F, {{20, 0, 20}}});
+	
+	registry.get<TH1>(HIST("TEST_RecPtlFinding"))->GetXaxis()->SetBinLabel(1+1, "Total reso + dir");
+	registry.get<TH1>(HIST("TEST_RecPtlFinding"))->GetXaxis()->SetBinLabel(2+1, "");
+	registry.get<TH1>(HIST("TEST_RecPtlFinding"))->GetXaxis()->SetBinLabel(3+1, "Xic to p 4pi mathed in 4 steps");
+	registry.get<TH1>(HIST("TEST_RecPtlFinding"))->GetXaxis()->SetBinLabel(4+1, "Xi to p 2pi mathed in 2 steps");
+	registry.get<TH1>(HIST("TEST_RecPtlFinding"))->GetXaxis()->SetBinLabel(5+1, "Lambda to p pi mathed in 1 steps");
 
 }	// add histogram for TEST remove them after debugging!
 
@@ -747,14 +756,17 @@ struct HfCandidateCreatorXicToXiPiPiExpressions {
         debug = 1;
       }
       if (indexRec > -1) {
+		registry.fill(HIST("TEST_RecPtlFinding"), 3); // TEST reco xic to p pi pi pi pi (in 4 steps) matched 
         // Xi- → pi pi p
         indexRec = RecoDecay::getMatchedMCRec<false, true, false, true>(mcParticles, arrayDaughtersCasc, +kXiMinus, std::array{+kPiMinus, +kProton, +kPiMinus}, true, &sign, 2);
+		registry.fill(HIST("TEST_RecPtlFinding"), 4); // TEST reco Xi to p pi pi (in 2 steps) matched
         if (indexRec == -1) {
           debug = 2;
         }
         if (indexRec > -1) {
           // Lambda → p pi
           indexRec = RecoDecay::getMatchedMCRec<false, true, false, true>(mcParticles, arrayDaughtersV0, +kLambda0, std::array{+kProton, +kPiMinus}, true, &sign, 1);
+		  registry.fill(HIST("TEST_RecPtlFinding"), 5);	// TEST reco Lambda to p pi (in 1 step) matched
           if (indexRec == -1) {
             debug = 3;
           }
@@ -797,13 +809,15 @@ struct HfCandidateCreatorXicToXiPiPiExpressions {
 	  arrDaughLambda.clear();	// TEST for num of daughters check
 	  arrDaughXi.clear();	// TEST for num of daughters check
 
+	  registry.fill(HIST("TEST_GenPtlFinding"), 17);
+
 	  // Xic -> p pi pi pi pi?
-	  if (RecoDecay::isMatchedMCGen(mcParticles, particle, Pdg::kXiCPlus, std::array{+kXiMinus, +kPiPlus, +kPiPlus, +kPiMinus, +kPiMinus, +kProton}, true, nullptr, 5)) {
+	  if (RecoDecay::isMatchedMCGen<false, true>(mcParticles, particle, Pdg::kXiCPlus, std::array{+kPiPlus, +kPiPlus, +kPiMinus, +kProton, +kPiMinus}, true, nullptr, 4)) {
 		registry.fill(HIST("TEST_GenPtlFinding"), 15); 
 	  }
 
       //  Xic → Xi pi pi
-      if (RecoDecay::isMatchedMCGen(mcParticles, particle, Pdg::kXiCPlus, std::array{+kXiMinus, +kPiPlus, +kPiPlus}, true, nullptr, 2)) {
+      if (RecoDecay::isMatchedMCGen<false, true>(mcParticles, particle, Pdg::kXiCPlus, std::array{+kXiMinus, +kPiPlus, +kPiPlus}, true, nullptr, 2)) {
         debug = 1;
 		registry.fill(HIST("TEST_GenPtlFinding"), 3);	// TEST hist of gen ptl, dir xic -> xi pi pi reconstructed
 		if(particle.y()<5 && particle.y()>-5){ registry.fill(HIST("TEST_XicPlusY"), particle.y());}	// TEST hist of gen Xic+'s Y
@@ -865,7 +879,6 @@ struct HfCandidateCreatorXicToXiPiPiExpressions {
 			auto dauLambda = mcParticles.rawIteratorAt(arrDaughLambda[i]);
 			registry.fill(HIST("TEST_CheckDaughterID_inDir_lambda"), dauLambda.pdgCode());
 			}
-			
             RecoDecay::getDaughters(particle, &arrDaughIndex, std::array{0}, 1);
             if (arrDaughIndex.size() == 2) {
 			  registry.fill(HIST("TEST_CheckNumOfDaughters_reso"),arrDaughIndex.size());	// TEST hist of checking num of daughters
