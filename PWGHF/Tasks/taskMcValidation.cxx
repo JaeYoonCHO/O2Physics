@@ -37,6 +37,8 @@
 #include "PWGHF/DataModel/CandidateSelectionTables.h"
 #include "PWGHF/Utils/utilsEvSelHf.h"
 
+using namespace std;	// TEST
+
 using namespace o2;
 using namespace o2::analysis;
 using namespace o2::aod;
@@ -136,7 +138,7 @@ struct HfTaskMcValidationGen {
 
   HistogramRegistry registry{
     "registry",
-    {{"hNevGen", "Generated events counter; Gen. events; entries", {HistType::kTH1F, {{1, -0.5, +0.5}}}},
+    {{"hNevGen", "Generated events counter; Gen. events; entries", {HistType::kTH1F, {{3, -0.5, +2.5}}}},
      {"hMomentumCheck", "Mom. Conservation (1 = true, 0 = false) (#it{#epsilon} = 1 MeV/#it{c}); Mom. Conservation result; entries", {HistType::kTH1F, {{2, -0.5, +1.5}}}},
      {"hPtDiffMotherDaughterGen", "Pt Difference Mother-Daughters; #Delta#it{p}_{T}^{gen} (GeV/#it{c}); entries", {HistType::kTH1F, {axisResiduals}}},
      {"hPxDiffMotherDaughterGen", "Px Difference Mother-Daughters; #Delta#it{p}_{x}^{gen} (GeV/#it{c}); entries", {HistType::kTH1F, {axisResiduals}}},
@@ -163,6 +165,10 @@ struct HfTaskMcValidationGen {
      {"Beauty/hPtCentDistr", "Pt vs Cent distribution vs beauty hadron in |#it{y}^{gen}|<0.5; ; #it{p}_{T}^{gen} (GeV/#it{c}); Centrality (%)", {HistType::kTH3F, {axisBeautySpecies, axisPt, axisCent}}},
      {"Beauty/hPtOccDistr", "Pt vs Occ distribution vs beauty hadron in |#it{y}^{gen}|<0.5; ; #it{p}_{T}^{gen} (GeV/#it{c}); Occupancy", {HistType::kTH3F, {axisBeautySpecies, axisPt, axisOcc}}},
      {"Beauty/hYDistr", "Y distribution vs beauty hadron; ; #it{y}^{gen}", {HistType::kTH2F, {axisBeautySpecies, axisY}}},
+     {"TEST_yDist", "TEST_yDist; ;y", {HistType::kTH1F, {{100, -20., 20.}}}},	// TEST y Dist
+     {"TEST_counter", "flag; ;counts", {HistType::kTH1F, {{15, 0., 15.}}}},	// TEST counter
+     {"TEST_CheckDaughterID", "TEST_CheckDaughterID", {HistType::kTH1F, {{9000, -4500, 4500}}}},	// TEST daughter ID check
+     {"TEST_CheckDaughterID_MatchedXic", "TEST_CheckDaughterID_MatchedXic", {HistType::kTH1F, {{9000, -4500, 4500}}}},	// TEST daugher ID of matched Xic
      {"Beauty/hDecLenDistr", "Decay length distribution vs beauty hadron; ; decay length (#mum)", {HistType::kTH2F, {axisBeautySpecies, axisDecLen}}},
      {"PromptCharmBaryons/hPromptBaryonsPtDistr", "Pt distribution vs prompt charm baryon in |#it{y}^{gen}|<0.5; ; #it{p}_{T}^{gen} (GeV/#it{c})", {HistType::kTH2F, {axisCharmBaryonSpecies, axisPt}}},
      {"PromptCharmBaryons/hPromptBaryonsPtCentDistr", "Pt vs Cent distribution vs prompt charm baryons in |#it{y}^{gen}|<0.5; ; #it{p}_{T}^{gen} (GeV/#it{c}); Centrality (%)", {HistType::kTH3F, {axisCharmBaryonSpecies, axisPt, axisCent}}},
@@ -231,6 +237,13 @@ struct HfTaskMcValidationGen {
       registry.get<TH2>(HIST("NonPromptCharmBaryons/hNonPromptBaryonsDecLenDistr"))->GetXaxis()->SetBinLabel(iBin, labels[iBin + nCharmMesonChannels + nBeautyChannels - 1].data());
     }
 
+	// TEST histo bin labeling
+	registry.get<TH1>(HIST("TEST_counter"))->GetXaxis()->SetBinLabel(1+1, "Xic to Xi pi pi matched");
+	registry.get<TH1>(HIST("TEST_counter"))->GetXaxis()->SetBinLabel(3+1, "Xic to Xi pi pi NOT matched");
+	registry.get<TH1>(HIST("TEST_counter"))->GetXaxis()->SetBinLabel(5+1, "Prompt + non prompt");
+	registry.get<TH1>(HIST("TEST_counter"))->GetXaxis()->SetBinLabel(7+1, "Prompt");
+	registry.get<TH1>(HIST("TEST_counter"))->GetXaxis()->SetBinLabel(9+1, "Non prompt");
+
     // inspect for which particle species the candidates were created and which zPvPosMax cut was set for reconstructed
     const auto& workflows = initContext.services().get<RunningWorkflowInfo const>();
     for (const DeviceSpec& device : workflows.devices) {
@@ -267,7 +280,7 @@ struct HfTaskMcValidationGen {
     }
     hfEvSelMc.fillHistograms<centEstimator>(mcCollision, rejectionMask);
     if (rejectionMask != 0) {
-      return;
+      //return;
     }
 
     int cPerCollision = 0;
@@ -275,14 +288,17 @@ struct HfTaskMcValidationGen {
     int bPerCollision = 0;
     int bBarPerCollision = 0;
 
+	std::vector<int> arrDaughXi;        // TEST vec
+	std::vector<int> arrDaugh;        // TEST vec
+
     for (const auto& particle : mcParticles) {
 
       if (rejectParticlesFromBkgEvent && particle.fromBackgroundEvent()) {
-        continue;
+        //continue;
       }
 
       if (!particle.has_mothers()) {
-        continue;
+        //continue;
       }
 
       int particlePdgCode = particle.pdgCode();
@@ -321,6 +337,10 @@ struct HfTaskMcValidationGen {
         }
 
         std::vector<int> listDaughters{};
+		arrDaughXi.clear();   // TEST for num of daughters check
+		arrDaugh.clear();   // TEST for num of daughters check
+
+		if(iD != XiCplusToXiPiPi){ continue;}	// TEST : reject other decay channels. looping over xic to xi pi pi case
 
         // Check that the decay channel is correct and retrieve the daughters
         if (nDaughters[iD] == 2) {
@@ -387,7 +407,8 @@ struct HfTaskMcValidationGen {
 
         if (nDaughters[iD] == 5) {
           if (!RecoDecay::isMatchedMCGen<false, true>(mcParticles, particle, PDGArrayParticle[iD], arrPDGFinal5Prong[iD], true, nullptr, maxDepthForSearch[iD], &listDaughters)) {
-            continue;
+            //continue;
+			cout << "TEST Dau num is 5 but no matched decay" << endl;
           }
           if (iD == Ds1ToDStarK0s &&
               !RecoDecay::isMatchedMCGen(mcParticles, particle, PDGArrayParticle[iD], std::array{+kK0Short, +o2::constants::physics::Pdg::kDStar}, false, nullptr, 2) &&
@@ -399,9 +420,15 @@ struct HfTaskMcValidationGen {
               !RecoDecay::isMatchedMCGen(mcParticles, particle, -PDGArrayParticle[iD], std::array{+kK0Short, -o2::constants::physics::Pdg::kDPlus}, false, nullptr, 2)) {
             continue;
           }
+		  // TEST check how many Xic to Xi pi pi
+		  if(iD == XiCplusToXiPiPi &&
+			RecoDecay::isMatchedMCGen(mcParticles, particle, PDGArrayParticle[iD], std::array{+kXiMinus, +kPiPlus, +kPiPlus}, true, nullptr, 2)) {
+			registry.fill(HIST("TEST_counter"), 1);   // TEST Xic decays to xi pi pi channel
+			}
           if (iD == XiCplusToXiPiPi &&
               !RecoDecay::isMatchedMCGen(mcParticles, particle, PDGArrayParticle[iD], std::array{+kXiMinus, +kPiPlus, +kPiPlus}, true, nullptr, 2)) {
-            continue;
+			  registry.fill(HIST("TEST_counter"), 3);	// TEST Xic not decays to xi pi pi channel
+	          continue;
           }
         }
 
@@ -476,6 +503,12 @@ struct HfTaskMcValidationGen {
           registry.fill(HIST("Beauty/hDecLenDistr"), iD - nCharmMesonChannels, decayLength * 10000);
         } else { // Charm baryons
           if (origin == RecoDecay::OriginType::Prompt) {
+			if(iD == XiCplusToXiPiPi){
+				registry.fill(HIST("TEST_yDist"), particle.y());   // TEST y of prompt Xic
+				registry.fill(HIST("TEST_counter"), 7);   // TEST Counter prompt Xic
+				registry.fill(HIST("TEST_counter"), 5);   // TEST Counter total xic = prompt + non prompt
+			}
+			registry.fill(HIST("TEST_counter"), 3);	// TEST y Dist of prompt xic
             if (std::abs(particle.y()) < 0.5) {
               registry.fill(HIST("PromptCharmBaryons/hPromptBaryonsPtDistr"), iD - nCharmMesonChannels - nBeautyChannels, particle.pt());
               registry.fill(HIST("PromptCharmBaryons/hPromptBaryonsPtCentDistr"), iD - nCharmMesonChannels - nBeautyChannels, particle.pt(), centrality);
@@ -486,6 +519,10 @@ struct HfTaskMcValidationGen {
             registry.fill(HIST("PromptCharmBaryons/hPromptBaryonsYDistr"), iD - nCharmMesonChannels - nBeautyChannels, particle.y());
             registry.fill(HIST("PromptCharmBaryons/hPromptBaryonsDecLenDistr"), iD - nCharmMesonChannels - nBeautyChannels, decayLength * 10000);
           } else if (origin == RecoDecay::OriginType::NonPrompt) {
+			if(iD == XiCplusToXiPiPi){
+				registry.fill(HIST("TEST_counter"), 9);   // TEST Counter non prompt Xic
+				registry.fill(HIST("TEST_counter"), 5);   // TEST Counter total xic = prompt + non prompt
+			}
             if (std::abs(particle.y()) < 0.5) {
               registry.fill(HIST("NonPromptCharmBaryons/hNonPromptBaryonsPtDistr"), iD - nCharmMesonChannels - nBeautyChannels, particle.pt());
               registry.fill(HIST("NonPromptCharmBaryons/hNonPromptBaryonsPtCentDistr"), iD - nCharmMesonChannels - nBeautyChannels, particle.pt(), centrality);
