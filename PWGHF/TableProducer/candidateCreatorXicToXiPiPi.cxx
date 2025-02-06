@@ -687,6 +687,7 @@ struct HfCandidateCreatorXicToXiPiPiExpressions {
 	registry.add("TEST_CheckNumOfDaughtersOfXicPlusNOTMatching", "TEST_CheckNumOfDaughtersOfXicPlusNOTMatching", {HistType::kTH1F, {{40, 0, 20}}});
 	registry.add("TEST_CheckNumOfDaughtersOfXiStarUnmatched", "TEST_CheckNumOfDaughtersOfXiStarUnmatched", {HistType::kTH1F, {{40, 0, 20}}});
 
+	registry.add("TEST_XicPlusDauID", "TEST_XicPlusDauID", {HistType::kTH1F, {{9000, -4500, 4500}}});
 	registry.add("TEST_XicPlusDauID_2daughters", "TEST_XicPlusDauID_2daughters", {HistType::kTH1F, {{9000, -4500, 4500}}});
 	registry.add("TEST_XicPlusDauID_3daughters", "TEST_XicPlusDauID_3daughters", {HistType::kTH1F, {{9000, -4500, 4500}}});
 
@@ -715,6 +716,7 @@ struct HfCandidateCreatorXicToXiPiPiExpressions {
 
 	std::vector<int> arrXiStarDau;	// TEST
 	std::vector<int> arrXiDau;		// TEST
+	std::vector<int> arrDau;		// TEST
 
     // Match reconstructed candidates.
     for (const auto& candidate : *rowCandidateXic) {
@@ -726,6 +728,7 @@ struct HfCandidateCreatorXicToXiPiPiExpressions {
 	  arrDaughXicPlus.clear();	// TEST array
 	  arrXiStarDau.clear();	// TEST
 	  arrXiDau.clear();		// TEST
+	  arrDau.clear();		// TEST
 
       auto arrayDaughters = std::array{candidate.pi0_as<aod::TracksWMc>(),       // pi <- Xic
                                        candidate.pi1_as<aod::TracksWMc>(),       // pi <- Xic
@@ -737,7 +740,7 @@ struct HfCandidateCreatorXicToXiPiPiExpressions {
                                            candidate.negTrack_as<aod::TracksWMc>()};
       auto arrayDaughtersV0 = std::array{candidate.posTrack_as<aod::TracksWMc>(),
                                          candidate.negTrack_as<aod::TracksWMc>()};
-	  auto arrayDaughtersCascStar = std::array{candidate.pi0_as<aod::TracksWMc>(),	// TEST to see cascade decay
+	  auto arrayDaughtersCascStar = std::array{candidate.pi1_as<aod::TracksWMc>(),	// TEST to see cascade decay
 											  candidate.bachelor_as<aod::TracksWMc>(),
 											  candidate.posTrack_as<aod::TracksWMc>(),
 											  candidate.negTrack_as<aod::TracksWMc>()};
@@ -750,6 +753,11 @@ struct HfCandidateCreatorXicToXiPiPiExpressions {
 	  if (indexRec > -1) {
 		auto ReallyXicPlus = mcParticles.rawIteratorAt(indexRecXicPlus);
 		registry.fill(HIST("TEST_MatchedRecIndex_Ximother_in_dau2loop"),ReallyXicPlus.pdgCode());
+		RecoDecay::getDaughters(ReallyXicPlus, &arrDau, std::array{0},1); 
+		for (auto iProng = 0u; iProng < arrDau.size(); ++iProng) {
+			auto daugh = mcParticles.rawIteratorAt(arrDau[iProng]);
+			registry.fill(HIST("TEST_XicPlusDauID"), daugh.pdgCode());
+		}
 	  }
 	  // TEST lines end ------------
       if (indexRec == -1) {
