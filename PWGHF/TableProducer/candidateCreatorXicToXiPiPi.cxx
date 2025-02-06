@@ -54,6 +54,8 @@ using namespace o2::aod::hf_cand_xic_to_xi_pi_pi;
 using namespace o2::constants::physics;
 using namespace o2::framework;
 
+using namespace std;
+
 /// Reconstruction of heavy-flavour 3-prong decay candidates
 struct HfCandidateCreatorXicToXiPiPi {
   Produces<aod::HfCandXicBase> rowCandidateBase;
@@ -658,7 +660,40 @@ struct HfCandidateCreatorXicToXiPiPiExpressions {
   Produces<aod::HfCandXicMcRec> rowMcMatchRec;
   Produces<aod::HfCandXicMcGen> rowMcMatchGen;
 
-  void init(InitContext const&) {}
+	HistogramRegistry registry{"registry"}; // TEST histogram
+
+  void init(InitContext const&) {
+	// TEST histograms. Remove them after check
+    registry.add("TEST_RecoMatching_counter", "TEST_RecoMatching_counter", {HistType::kTH1F, {{25, 0, 25}}}); 
+
+	registry.get<TH1>(HIST("TEST_RecoMatching_counter"))->GetXaxis()->SetBinLabel(1+1, "Start matching");
+	registry.get<TH1>(HIST("TEST_RecoMatching_counter"))->GetXaxis()->SetBinLabel(3+1, "Xic+ to p 4pi matched");
+	registry.get<TH1>(HIST("TEST_RecoMatching_counter"))->GetXaxis()->SetBinLabel(5+1, "Xi to p 2pi matched");
+	registry.get<TH1>(HIST("TEST_RecoMatching_counter"))->GetXaxis()->SetBinLabel(7+1, "Lambda to p pi matched");
+	registry.get<TH1>(HIST("TEST_RecoMatching_counter"))->GetXaxis()->SetBinLabel(9+1, "Xi* to p 3pi matched");
+	registry.get<TH1>(HIST("TEST_RecoMatching_counter"))->GetXaxis()->SetBinLabel(11+1, "Xi(<-Xi*) to p 2pi matched");
+	registry.get<TH1>(HIST("TEST_RecoMatching_counter"))->GetXaxis()->SetBinLabel(16+1, "Resonant flag assigned");
+	registry.get<TH1>(HIST("TEST_RecoMatching_counter"))->GetXaxis()->SetBinLabel(18+1, "Direct flag assigned");
+	registry.get<TH1>(HIST("TEST_RecoMatching_counter"))->GetXaxis()->SetBinLabel(20+1, "Any flag assiged");
+	registry.get<TH1>(HIST("TEST_RecoMatching_counter"))->GetXaxis()->SetBinLabel(23+1, "Gen flag assiged");
+
+	registry.add("TEST_RecoMatching_counter_negativeIdx", "TEST_RecoMatching_counter_negativeIdx", {HistType::kTH1F, {{20, 0, 20}}}); 
+	registry.get<TH1>(HIST("TEST_RecoMatching_counter_negativeIdx"))->GetXaxis()->SetBinLabel(1+1, "Xic+ to p 4pi not matched");
+	registry.get<TH1>(HIST("TEST_RecoMatching_counter_negativeIdx"))->GetXaxis()->SetBinLabel(2+1, "Xi to p 2pi not matched");
+	registry.get<TH1>(HIST("TEST_RecoMatching_counter_negativeIdx"))->GetXaxis()->SetBinLabel(3+1, "Lambda to p pi not matched");
+
+	registry.add("TEST_CheckNumOfDaughtersOfXicPlus", "TEST_CheckNumOfDaughtersOfXicPlus", {HistType::kTH1F, {{40, 0, 20}}});
+	registry.add("TEST_CheckNumOfDaughtersOfXicPlusInMatching", "TEST_CheckNumOfDaughtersOfXicPlusInMatching", {HistType::kTH1F, {{40, 0, 20}}});
+	registry.add("TEST_CheckNumOfDaughtersOfXicPlusNOTMatching", "TEST_CheckNumOfDaughtersOfXicPlusNOTMatching", {HistType::kTH1F, {{40, 0, 20}}});
+	registry.add("TEST_CheckNumOfDaughtersOfXiStarUnmatched", "TEST_CheckNumOfDaughtersOfXiStarUnmatched", {HistType::kTH1F, {{40, 0, 20}}});
+
+	registry.add("TEST_XicPlusDauID_2daughters", "TEST_XicPlusDauID_2daughters", {HistType::kTH1F, {{9000, -4500, 4500}}});
+	registry.add("TEST_XicPlusDauID_3daughters", "TEST_XicPlusDauID_3daughters", {HistType::kTH1F, {{9000, -4500, 4500}}});
+
+	registry.add("TEST_MatchedRecIndex_Ximother_in_dau2loop", "TEST_MatchedRecIndex_Ximother_in_dau2loop", {HistType::kTH1F, {{9000, -4500, 4500}}});
+	registry.add("TEST_MatchedRecIndex_Ximother_in_dau3loop", "TEST_MatchedRecIndex_Ximother_in_dau3loop", {HistType::kTH1F, {{9000, -4500, 4500}}});
+
+  }
 
   void processMc(aod::TracksWMc const& tracks,
                  aod::McParticles const& mcParticles)
@@ -667,6 +702,7 @@ struct HfCandidateCreatorXicToXiPiPiExpressions {
 
     int indexRec = -1;
     int indexRecXicPlus = -1;
+	int indexRecCascStar = -1;	// TEST index
     int8_t sign = 0;
     int8_t flag = 0;
     int8_t origin = 0;
@@ -675,6 +711,10 @@ struct HfCandidateCreatorXicToXiPiPiExpressions {
     std::vector<int> arrDaughIndex;
     std::array<int, 2> arrPDGDaugh;
     std::array<int, 2> arrXiResonance = {3324, kPiPlus}; // 3324: Ξ(1530)
+	std::vector<int> arrDaughXicPlus;	// To check XicPlus daughters
+
+	std::vector<int> arrXiStarDau;	// TEST
+	std::vector<int> arrXiDau;		// TEST
 
     // Match reconstructed candidates.
     for (const auto& candidate : *rowCandidateXic) {
@@ -683,6 +723,9 @@ struct HfCandidateCreatorXicToXiPiPiExpressions {
       origin = RecoDecay::OriginType::None;
       debug = 0;
       arrDaughIndex.clear();
+	  arrDaughXicPlus.clear();	// TEST array
+	  arrXiStarDau.clear();	// TEST
+	  arrXiDau.clear();		// TEST
 
       auto arrayDaughters = std::array{candidate.pi0_as<aod::TracksWMc>(),       // pi <- Xic
                                        candidate.pi1_as<aod::TracksWMc>(),       // pi <- Xic
@@ -694,26 +737,84 @@ struct HfCandidateCreatorXicToXiPiPiExpressions {
                                            candidate.negTrack_as<aod::TracksWMc>()};
       auto arrayDaughtersV0 = std::array{candidate.posTrack_as<aod::TracksWMc>(),
                                          candidate.negTrack_as<aod::TracksWMc>()};
+	  auto arrayDaughtersCascStar = std::array{candidate.pi0_as<aod::TracksWMc>(),	// TEST to see cascade decay
+											  candidate.bachelor_as<aod::TracksWMc>(),
+											  candidate.posTrack_as<aod::TracksWMc>(),
+											  candidate.negTrack_as<aod::TracksWMc>()};
 
       // Xic → pi pi pi pi p
+	  //registry.fill(HIST("TEST_RecoMatching_counter"), 1); // TEST counter matching start
       indexRec = RecoDecay::getMatchedMCRec<false, true, false, true>(mcParticles, arrayDaughters, Pdg::kXiCPlus, std::array{+kPiPlus, +kPiPlus, +kPiMinus, +kProton, +kPiMinus}, true, &sign, 4);
+	  // TEST lines start -----------
       indexRecXicPlus = indexRec;
+	  if (indexRec > -1) {
+		auto ReallyXicPlus = mcParticles.rawIteratorAt(indexRecXicPlus);
+		registry.fill(HIST("TEST_MatchedRecIndex_Ximother_in_dau2loop"),ReallyXicPlus.pdgCode());
+	  }
+	  // TEST lines end ------------
       if (indexRec == -1) {
         debug = 1;
+		registry.fill(HIST("TEST_RecoMatching_counter_negativeIdx"), 1);
+		registry.fill(HIST("TEST_CheckNumOfDaughtersOfXicPlusNOTMatching"), arrDaughXicPlus.size());
       }
-      if (indexRec > -1) {
+	  if (indexRec > -1) {
+	  cout << "+++TEST positive Xic+ to p pipipipi matched index = " << indexRec << endl;
+	  // TEST lines start------
+	  auto XicPlusInfo = mcParticles.rawIteratorAt(indexRec);   // Get XicPlus info
+	  RecoDecay::getDaughters(XicPlusInfo, &arrDaughXicPlus, std::array{0}, 1); // TEST Get daughters
+	  registry.fill(HIST("TEST_CheckNumOfDaughtersOfXicPlus"), arrDaughXicPlus.size()); // TEST histo. check num of daughters of Xic+
+	  // TEST lines end--------
+		registry.fill(HIST("TEST_RecoMatching_counter"), 3); // TEST counter Xic+ to p 4pi matched
         // Xi- → pi pi p
-        indexRec = RecoDecay::getMatchedMCRec<false, true, false, true>(mcParticles, arrayDaughtersCasc, +kXiMinus, std::array{+kPiMinus, +kProton, +kPiMinus}, true, &sign, 2);
+        //indexRec = RecoDecay::getMatchedMCRec<false, true, false, true>(mcParticles, arrayDaughtersCasc, +kXiMinus, std::array{+kPiMinus, +kProton, +kPiMinus}, true, &sign, 2);
+		// TEST lines start -----
+			bool isCascStar = false;
+		if(arrDaughXicPlus.size()==2){
+			indexRecCascStar = RecoDecay::getMatchedMCRec<false, true, false, true>(mcParticles, arrayDaughtersCascStar, 3324, std::array{+kPiPlus, +kPiMinus, +kProton, +kPiMinus}, true, &sign, 3);
+			if(indexRecCascStar > -1){
+				registry.fill(HIST("TEST_RecoMatching_counter"), 9);	// TEST Xi* to p pi pi pi pi matched
+				indexRec = RecoDecay::getMatchedMCRec<false, true, false, true>(mcParticles, arrayDaughtersCasc, +kXiMinus, std::array{+kPiMinus, +kProton, +kPiMinus}, true, &sign, 2);
+				if(indexRec > -1){
+					isCascStar = true;
+					cout << "+++++TEST Xic+ dau was 2 and the index of Xi(1530) to p pipipi matching is " << indexRec  << endl;
+					registry.fill(HIST("TEST_RecoMatching_counter"), 11);    // TEST Xi(<-Xi*) to p pi pi matched
+					RecoDecay::getDaughters(mcParticles.rawIteratorAt(indexRecCascStar), &arrXiStarDau, std::array{0}, 1); // TEST Get Xi star daughters
+					for (auto iProng = 0u; iProng < arrXiStarDau.size(); ++iProng) {
+						auto daughXiStar = mcParticles.rawIteratorAt(arrXiStarDau[iProng]);
+						registry.fill(HIST("TEST_XicPlusDauID_2daughters"), daughXiStar.pdgCode());
+					}
+				}
+			}
+		} else{
+			indexRec = RecoDecay::getMatchedMCRec<false, true, false, true>(mcParticles, arrayDaughtersCasc, +kXiMinus, std::array{+kPiMinus, +kProton, +kPiMinus}, true, &sign, 2);
+			cout << "+++++TEST Xic+ dau was 3 and the index of Xi to p pipi matching is " << indexRec  << endl;
+			RecoDecay::getDaughters(mcParticles.rawIteratorAt(indexRec), &arrXiDau, std::array{0}, 1); // TEST Get Xi daughters
+			for (auto iProng = 0u; iProng < arrXiDau.size(); ++iProng) {
+				auto daughXi = mcParticles.rawIteratorAt(arrXiDau[iProng]);
+				registry.fill(HIST("TEST_XicPlusDauID_3daughters"), daughXi.pdgCode());
+			}
+		}
+		// TEST lines end -------
         if (indexRec == -1) {
           debug = 2;
+		  registry.fill(HIST("TEST_RecoMatching_counter_negativeIdx"), 2);
         }
-        if (indexRec > -1) {
+		if (indexRec > -1) {
+		cout << "+++TEST positive Xi to p pipi matched index = " << indexRec << endl;
+		if(isCascStar){cout << "++++++isCascStar flag true" << endl;}else{cout << "++++++isCascStar flag false" << endl;}
+		// TEST lines start-------
+		registry.fill(HIST("TEST_RecoMatching_counter"), 5); // TEST counter Xi to p 2pi mathched
+		registry.fill(HIST("TEST_CheckNumOfDaughtersOfXicPlusInMatching"), arrDaughXicPlus.size()); // TEST histo. check num of daughters of Xic+ after Xi to pi pi p matching
+		// TEST lines end -------
           // Lambda → p pi
           indexRec = RecoDecay::getMatchedMCRec<false, true, false, true>(mcParticles, arrayDaughtersV0, +kLambda0, std::array{+kProton, +kPiMinus}, true, &sign, 1);
           if (indexRec == -1) {
             debug = 3;
+			registry.fill(HIST("TEST_RecoMatching_counter_negativeIdx"), 3);
           }
           if (indexRec > -1) {
+			cout << "+++TEST positive lambda to p pi matched index = " << indexRec << endl;
+			registry.fill(HIST("TEST_RecoMatching_counter"), 7); // TEST counter Lambda to p pi matched
             RecoDecay::getDaughters(mcParticles.rawIteratorAt(indexRecXicPlus), &arrDaughIndex, std::array{0}, 1);
             if (arrDaughIndex.size() == 2) {
               for (auto iProng = 0u; iProng < arrDaughIndex.size(); ++iProng) {
@@ -722,11 +823,14 @@ struct HfCandidateCreatorXicToXiPiPiExpressions {
               }
               if ((arrPDGDaugh[0] == arrXiResonance[0] && arrPDGDaugh[1] == arrXiResonance[1]) || (arrPDGDaugh[0] == arrXiResonance[1] && arrPDGDaugh[1] == arrXiResonance[0])) {
                 flag = sign * (1 << aod::hf_cand_xic_to_xi_pi_pi::DecayType::XicToXiResPiToXiPiPi);
+				registry.fill(HIST("TEST_RecoMatching_counter"), 16); // TEST counter for resonant decay flag 
               } else {
                 debug = 4;
+				registry.fill(HIST("TEST_RecoMatching_counter"), 20); // TEST counter not assigned any flag
               }
             } else {
               flag = sign * (1 << aod::hf_cand_xic_to_xi_pi_pi::DecayType::XicToXiPiPi);
+			  registry.fill(HIST("TEST_RecoMatching_counter"), 18);	// TEST counter for direct decay flag 
             }
           }
         }
@@ -775,11 +879,13 @@ struct HfCandidateCreatorXicToXiPiPiExpressions {
               }
               if ((arrPDGDaugh[0] == arrXiResonance[0] && arrPDGDaugh[1] == arrXiResonance[1]) || (arrPDGDaugh[0] == arrXiResonance[1] && arrPDGDaugh[1] == arrXiResonance[0])) {
                 flag = sign * (1 << aod::hf_cand_xic_to_xi_pi_pi::DecayType::XicToXiResPiToXiPiPi);
+				registry.fill(HIST("TEST_RecoMatching_counter_negativeIdx"), 23);
               } else {
                 debug = 4;
               }
             } else {
               flag = sign * (1 << aod::hf_cand_xic_to_xi_pi_pi::DecayType::XicToXiPiPi);
+			  registry.fill(HIST("TEST_RecoMatching_counter_negativeIdx"), 23);
             }
           }
         }
