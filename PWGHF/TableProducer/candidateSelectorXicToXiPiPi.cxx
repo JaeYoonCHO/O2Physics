@@ -114,7 +114,23 @@ struct HfCandidateSelectorXicToXiPiPi {
       for (int iBin = 0; iBin < kNBinsSelections; ++iBin) {
         registry.get<TH2>(HIST("hSelections"))->GetXaxis()->SetBinLabel(iBin + 1, labels[iBin].data());
       }
-    }
+
+	  // TEST histograms --- starts
+	  registry.add("TEST_COSPA", "TEST_COSPA", {HistType::kTH1F, {{240, -1.2, 1.2}}});
+	  registry.add("TEST_COSPAXY", "TEST_COSPAXY", {HistType::kTH1F, {{240, -1.2, 1.2}}});
+	  registry.add("TEST_DECAYLENGTH", "TEST_DECAYLENGTH", {HistType::kTH1F, {{200, -1, 199}}});
+	  registry.add("TEST_DECAYLENGTHXY", "TEST_DECAYLENGTHXY", {HistType::kTH1F, {{200, -1, 199}}});
+	  registry.add("TEST_CHI2PCA", "TEST_CHI2PCA", {HistType::kTH1F, {{20, 0, 20}}});
+	  registry.add("TEST_AbsImpParaXi", "TEST_AbsImpParaXi", {HistType::kTH1F, {{400, -20, 20}}});
+	  registry.add("TEST_AbsImpParaPi0", "TEST_AbsImpParaPi0", {HistType::kTH1F, {{400, -20, 20}}});
+	  registry.add("TEST_AbsImpParaPi1", "TEST_AbsImpParaPi1", {HistType::kTH1F, {{400, -20, 20}}});
+	  registry.add("TEST_pTXi", "TEST_pTXi", {HistType::kTH1F, {{100, 0, 100}}});
+	  registry.add("TEST_pTPi0", "TEST_pTPi0", {HistType::kTH1F, {{100, 0, 100}}});
+	  registry.add("TEST_pTPi1", "TEST_pTPi1", {HistType::kTH1F, {{100, 0, 100}}});
+	  // TEST histograms --- ends
+
+
+    }	// loop over activateQA
 
     if (applyMl) {
       hfMlResponse.configure(binsPtMl, cutsMl, cutDirMl, nClassesMl);
@@ -230,6 +246,20 @@ struct HfCandidateSelectorXicToXiPiPi {
       if (activateQA) {
         registry.fill(HIST("hSelections"), 1, ptCandXic);
       }
+
+	  // Fill TEST histo starts 
+	  registry.fill(HIST("TEST_COSPA"), hfCandXic.cpa());
+	  registry.fill(HIST("TEST_COSPAXY"), hfCandXic.cpaXY());
+	  registry.fill(HIST("TEST_DECAYLENGTH"), hfCandXic.decayLength());
+	  registry.fill(HIST("TEST_DECAYLENGTHXY"), hfCandXic.decayLengthXY());
+	  registry.fill(HIST("TEST_CHI2PCA"), hfCandXic.chi2PCA());
+	  registry.fill(HIST("TEST_AbsImpParaXi"), std::abs(hfCandXic.impactParameter0()));
+	  registry.fill(HIST("TEST_AbsImpParaPi0"), std::abs(hfCandXic.impactParameter1()));
+	  registry.fill(HIST("TEST_AbsImpParaPi1"), std::abs(hfCandXic.impactParameter2()));
+	  registry.fill(HIST("TEST_pTXi"), hfCandXic.ptProng0());
+	  registry.fill(HIST("TEST_pTPi0"), hfCandXic.ptProng1());
+	  registry.fill(HIST("TEST_pTPi1"), hfCandXic.ptProng2());
+	  // Fill TEST histo end
 
       // No hfFlag -> by default skim selected
       SETBIT(statusXicToXiPiPi, SelectionStep::RecoSkims); // RecoSkims = 0 --> statusXicToXiPiPi = 1
