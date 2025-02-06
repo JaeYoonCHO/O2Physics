@@ -268,7 +268,7 @@ struct HfTaskMcValidationGen {
     }
     hfEvSelMc.fillHistograms<centEstimator>(mcCollision, rejectionMask);
     if (rejectionMask != 0) {
-      return;
+      //return;
     }
 
     int cPerCollision = 0;
@@ -279,11 +279,11 @@ struct HfTaskMcValidationGen {
     for (const auto& particle : mcParticles) {
 
       if (rejectParticlesFromBkgEvent && particle.fromBackgroundEvent()) {
-        continue;
+        //continue;
       }
 
       if (!particle.has_mothers()) {
-        continue;
+        //continue;
       }
 
       int particlePdgCode = particle.pdgCode();
@@ -322,6 +322,7 @@ struct HfTaskMcValidationGen {
         }
 
         std::vector<int> listDaughters{};
+		if(iD != XiCplusToXiPiPi){continue;}
 
         // Check that the decay channel is correct and retrieve the daughters
         if (nDaughters[iD] == 2) {
