@@ -74,6 +74,8 @@ using namespace o2::framework;
 using namespace o2::framework::expressions;
 using namespace o2::hf_evsel;
 
+using namespace std;
+
 // Reconstruction of omegac0 and xic0 candidates
 struct HfCandidateCreatorXic0Omegac0 {
   Produces<aod::HfCandToXiPi> rowCandToXiPi;
@@ -1878,6 +1880,13 @@ struct HfCandidateCreatorXic0Omegac0Mc {
 
     hGenCharmBaryonPtRapidityTightOmegacToOmegaK = registry.add<TH1>("hGenCharmBaryonPtRapidityTightOmegacToOmegaK", "Generated charm baryon #it{p}_{T};#it{p}_{T} (GeV/#it{c});entries", {HistType::kTH1D, {{20, 0.0, 20.0}}});
     hGenCharmBaryonPtRapidityLooseOmegacToOmegaK = registry.add<TH1>("hGenCharmBaryonPtRapidityLooseOmegacToOmegaK", "Generated charm baryon #it{p}_{T};#it{p}_{T} (GeV/#it{c});entries", {HistType::kTH1D, {{20, 0.0, 20.0}}});
+    registry.add("hcounterXic","hcounterXic",{HistType::kTH1D, {{20, 0.0, 20.0}}});
+
+	registry.get<TH1>(HIST("hcounterXic"))->GetXaxis()->SetBinLabel(1+1, "Xic to p pi pi pi matching");
+	registry.get<TH1>(HIST("hcounterXic"))->GetXaxis()->SetBinLabel(1+3, "Xi to p pi pi matching");
+	registry.get<TH1>(HIST("hcounterXic"))->GetXaxis()->SetBinLabel(1+5, "Lambda to p pi matching");
+	registry.get<TH1>(HIST("hcounterXic"))->GetXaxis()->SetBinLabel(1+7, "checkProcess false");
+
   }
 
   template <o2::hf_centrality::CentralityEstimator centEstimator, int decayChannel, typename Colls, typename TMyRecoCand, typename McCollisions>
@@ -1891,6 +1900,7 @@ struct HfCandidateCreatorXic0Omegac0Mc {
     float ptCharmBaryonGen = -999.;
     float rapidityCharmBaryonGen = -999.;
     int indexRec = -1;
+	int indexT = -1;	// test
     int indexRecCharmBaryon = -1;
     int8_t sign = -9;
     int8_t signCasc = -9;
@@ -1955,6 +1965,13 @@ struct HfCandidateCreatorXic0Omegac0Mc {
 
       // Xic0 -> xi pi matching
       if constexpr (decayChannel == aod::hf_cand_xic0_omegac0::DecayType::XiczeroToXiPi) {
+	
+		// test
+		indexT = RecoDecay::getMatchedMCRec<false, false>(mcParticles, arrayDaughters, pdgCodeXic0, std::array{pdgCodePiPlus, pdgCodePiMinus, pdgCodeProton, pdgCodePiMinus}, true, &sign, 3);
+		if(indexT > -1){
+			registry.fill(HIST("hcounterXic"), 7);
+		}
+
         // Xic → pi pi pi p
         indexRec = RecoDecay::getMatchedMCRec<false, true>(mcParticles, arrayDaughters, pdgCodeXic0, std::array{pdgCodePiPlus, pdgCodePiMinus, pdgCodeProton, pdgCodePiMinus}, true, &sign, 3);
         indexRecCharmBaryon = indexRec;
@@ -1962,18 +1979,21 @@ struct HfCandidateCreatorXic0Omegac0Mc {
           debug = 1;
         }
         if (indexRec > -1) {
+		  registry.fill(HIST("hcounterXic"), 1); // test	
           // Xi- → pi pi p
           indexRec = RecoDecay::getMatchedMCRec<false, true>(mcParticles, arrayDaughtersCasc, pdgCodeXiMinus, std::array{pdgCodePiMinus, pdgCodeProton, pdgCodePiMinus}, true, &signCasc, 2);
           if (indexRec == -1) {
             debug = 2;
           }
           if (indexRec > -1) {
+			registry.fill(HIST("hcounterXic"), 3); // test
             // Lambda → p pi
             indexRec = RecoDecay::getMatchedMCRec<false, true>(mcParticles, arrayDaughtersV0, pdgCodeLambda, std::array{pdgCodeProton, pdgCodePiMinus}, true, &signV0, 1);
             if (indexRec == -1) {
               debug = 3;
             }
             if (indexRec > -1) {
+			  registry.fill(HIST("hcounterXic"), 5); // test
               flag = sign * (1 << aod::hf_cand_xic0_omegac0::DecayType::XiczeroToXiPi);
               collisionMatched = candidate.template collision_as<Colls>().mcCollisionId() == mcParticles.iteratorAt(indexRecCharmBaryon).mcCollisionId();
             }

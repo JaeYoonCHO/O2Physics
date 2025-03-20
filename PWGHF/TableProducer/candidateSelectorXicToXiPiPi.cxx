@@ -237,7 +237,7 @@ struct HfCandidateSelectorXicToXiPiPi {
         registry.fill(HIST("hSelections"), 2 + SelectionStep::RecoSkims, ptCandXic);
       }
 
-      // topological cuts
+/*      // topological cuts
       if (!selectionTopol(hfCandXic)) {
         hfSelXicToXiPiPiCandidate(statusXicToXiPiPi);
         if (applyMl) {
@@ -302,7 +302,7 @@ struct HfCandidateSelectorXicToXiPiPi {
           registry.fill(HIST("hSelections"), 2 + SelectionStep::RecoMl, ptCandXic);
         }
       }
-
+*/
       hfSelXicToXiPiPiCandidate(statusXicToXiPiPi);
     }
   }

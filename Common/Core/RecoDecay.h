@@ -28,6 +28,9 @@
 #include "TPDGCode.h"   // for PDG codes
 #include "CommonConstants/MathConstants.h"
 
+#include <iostream>
+using namespace std;	// test
+
 /// Base class for calculating properties of reconstructed decays
 ///
 /// Provides static helper functions for:
@@ -617,6 +620,12 @@ struct RecoDecay {
     if constexpr (checkProcess) {
       // If the particle is neither the original particle nor coming from a decay, we do nothing and exit.
       if (stage != 0 && particle.getProcess() != TMCProcess::kPDecay && particle.getProcess() != TMCProcess::kPPrimary) { // decay products of HF hadrons are labeled as kPPrimary
+		// ------- check the particle ID when it came from material interaction ------- // test
+		cout << "+++++++++TEST it is from neither PDecay nor PPrimary = " << particle.pdgCode() << endl;
+		cout << "Stage is " << stage << endl;
+		if(particle.getProcess() != TMCProcess::kPDecay){ cout << "This is not PDecay!" << endl;}
+		if(particle.getProcess() != TMCProcess::kPPrimary){ cout << "This is not Primary!" << endl;}
+		if(particle.getProcess() != TMCProcess::kPDecay && particle.getProcess() != TMCProcess::kPPrimary){ cout << "This is neither PDecay nor Primary!" << endl;}
         return;
       }
     }
@@ -732,13 +741,16 @@ struct RecoDecay {
         auto motherI = particleI.template mothers_first_as<T>();
         auto pdgI = std::abs(particleI.pdgCode());
         auto pdgMotherI = std::abs(motherI.pdgCode());
+        //cout << "++++++ check : Before pi to mu or K to pi decay. particleI id = " << particleI.pdgCode() << " and pdgMotherI id = " << motherI.pdgCode() << endl;
         if (pdgI == kMuonMinus && pdgMotherI == kPiPlus) {
           // π → μ
           nPiToMuLocal++;
+          //cout << "Check ++++ AcceptTrackDecay (pi to mu) -- Target mother id = " << PDGMother << " and -- Mother ID = " << motherI.pdgCode() << " and Track id = " << particleI.pdgCode() << endl;
           particleI = motherI;
         } else if (pdgI == kPiPlus && pdgMotherI == kKPlus) {
           // K → π
           nKaToPiLocal++;
+          //cout << "Check ++++ AcceptTrackDecay (K to pi) -- Target mother id = " << PDGMother << " and -- Mother ID = " << motherI.pdgCode() << " and Track id = " << particleI.pdgCode() << endl;
           particleI = motherI;
         }
       }
@@ -789,6 +801,7 @@ struct RecoDecay {
             return -1;
           }
         }
+
         // Get the list of actual final daughters.
         getDaughters<checkProcess>(particleMother, &arrAllDaughtersIndex, arrPDGDaughters, depthMax);
         // printf("MC Rec: Mother %d has %d final daughters:", indexMother, arrAllDaughtersIndex.size());

@@ -658,7 +658,48 @@ struct HfCandidateCreatorXicToXiPiPiExpressions {
   Produces<aod::HfCandXicMcRec> rowMcMatchRec;
   Produces<aod::HfCandXicMcGen> rowMcMatchGen;
 
-  void init(InitContext const&) {}
+  HistogramRegistry registry{"registry"}; // TEST histogram
+
+  void init(InitContext const&) {
+
+    registry.add("TEST_RecoMatching_counter", "TEST_RecoMatching_counter", {HistType::kTH1F, {{35, 0, 35}}}); 
+
+	registry.get<TH1>(HIST("TEST_RecoMatching_counter"))->GetXaxis()->SetBinLabel(1+1, "Start matching");
+	registry.get<TH1>(HIST("TEST_RecoMatching_counter"))->GetXaxis()->SetBinLabel(3+1, "Xic+ to p 4pi matched");
+	registry.get<TH1>(HIST("TEST_RecoMatching_counter"))->GetXaxis()->SetBinLabel(5+1, "Xi to p 2pi matched");
+	registry.get<TH1>(HIST("TEST_RecoMatching_counter"))->GetXaxis()->SetBinLabel(7+1, "Lambda to p pi matched");
+	registry.get<TH1>(HIST("TEST_RecoMatching_counter"))->GetXaxis()->SetBinLabel(9+1, "Xi* to p 3pi matched");
+	registry.get<TH1>(HIST("TEST_RecoMatching_counter"))->GetXaxis()->SetBinLabel(11+1, "Xi(<-Xi*) to p 2pi matched");
+	registry.get<TH1>(HIST("TEST_RecoMatching_counter"))->GetXaxis()->SetBinLabel(16+1, "Resonant flag assigned");
+	registry.get<TH1>(HIST("TEST_RecoMatching_counter"))->GetXaxis()->SetBinLabel(18+1, "Direct flag assigned");
+	registry.get<TH1>(HIST("TEST_RecoMatching_counter"))->GetXaxis()->SetBinLabel(20+1, "no check p, no accept t");
+	registry.get<TH1>(HIST("TEST_RecoMatching_counter"))->GetXaxis()->SetBinLabel(23+1, "with check p, no accept t");
+    registry.get<TH1>(HIST("TEST_RecoMatching_counter"))->GetXaxis()->SetBinLabel(25+1, "no check p, with accept t");
+	registry.get<TH1>(HIST("TEST_RecoMatching_counter"))->GetXaxis()->SetBinLabel(27+1, "with check p, with accept t");
+	registry.get<TH1>(HIST("TEST_RecoMatching_counter"))->GetXaxis()->SetBinLabel(29+1, "with checkp + accpet T false up to q");
+	registry.get<TH1>(HIST("TEST_RecoMatching_counter"))->GetXaxis()->SetBinLabel(31+1, "with checkp + accpet T true up to q");
+
+	registry.add("TEST_Origin", "TEST_Origin", {HistType::kTH1F, {{12, -1, 5}}});
+ 
+	registry.add("pionpT_inXicMatchingLoop", "pionpT_inXicMatchingLoop", {HistType::kTH1F, {{1100, -1, 10}}});
+	registry.add("pionpT_inXiMatchingLoop", "pionpT_inXiMatchingLoop", {HistType::kTH1F, {{1100, -1, 10}}});
+	registry.add("pionpT_inLambdaMatchingLoop", "pionpT_inLambdaMatchingLoop", {HistType::kTH1F, {{1100, -1, 10}}});
+	registry.add("pionpT_XicP_reso_dir_decay", "pionpT_XicP_reso_dir_decay", {HistType::kTH1F, {{1100, -1, 10}}});
+
+	registry.add("withCheckProcess_daughterOfXi", "withCheckProcess_daughterOfXi", {HistType::kTH1F, {{90000, -4500, 4500}}});
+	registry.add("withoutCheckProcess_daughterOfXi", "withoutCheckProcess_daughterOfXi", {HistType::kTH1F, {{90000, -4500, 4500}}});
+
+	registry.add("pionpTfromXi_withCheckProcess", "pionpTfromXi_withCheckProcess", {HistType::kTH1F, {{600, -1, 5}}});
+	registry.add("pionpTfromXi_withoutCheckProcess", "pionpTfromXi_withoutCheckProcess", {HistType::kTH1F, {{600, -1, 5}}});
+
+	registry.add("pionpTfromXic_withCheckProcess", "pionpTfromXic_withCheckProcess", {HistType::kTH1F, {{900, -1, 8}}});
+	registry.add("pionpTfromXic_withoutCheckProcess", "pionpTfromXic_withoutCheckProcess", {HistType::kTH1F, {{900, -1, 8}}});
+
+	registry.add("counter_withAndwithoutCheckProcess", "counter_withAndwithoutCheckProcess", {HistType::kTH1F, {{12, -1, 11}}});
+	registry.get<TH1>(HIST("counter_withAndwithoutCheckProcess"))->GetXaxis()->SetBinLabel(1+1, "Without checkProcess");
+	registry.get<TH1>(HIST("counter_withAndwithoutCheckProcess"))->GetXaxis()->SetBinLabel(3+1, "With checkProcess");
+
+}
 
   void processMc(aod::TracksWMc const& tracks,
                  aod::McParticles const& mcParticles)
@@ -667,15 +708,32 @@ struct HfCandidateCreatorXicToXiPiPiExpressions {
 
     int indexRec = -1;
     int indexRecXicPlus = -1;
+	int indexXicPlus_w_checkprocess = -1;
+	int indexXicPlus_wo_checkprocess = -1;
+	int indexXi_wo_checkProcess = -1;
+	int indexXi_w_checkProcess = -1;
     int8_t sign = 0;
     int8_t flag = 0;
     int8_t origin = 0;
     int8_t debug = 0;
     // for resonance matching:
     std::vector<int> arrDaughIndex;
+	std::vector<int> arrDaughLambdaIndex;	// test
+	std::vector<int> arrDaughXiIndex;	// test
+	std::vector<int> arrDaughXicIndex;	// test
+	std::vector<int> arrDaughXiIndex_w_checkprocess;	// test
+	std::vector<int> arrDaughXiIndex_wo_checkprocess;	// test
+	std::vector<int> arrDaughXicIndex_wo_checkprocess;
+	std::vector<int> arrDaughXicIndex_w_checkprocess;
     std::array<int, 2> arrPDGDaugh;
     std::array<int, 2> arrXiResonance = {3324, kPiPlus}; // 3324: Ξ(1530)
-
+ 
+	//registry.fill(HIST("TEST_RecoMatching_counter"), 20); // check process = false, accept track = false
+	//registry.fill(HIST("TEST_RecoMatching_counter"), 23); // check process = true, accept track = false
+	//registry.fill(HIST("TEST_RecoMatching_counter"), 25); // check process = false, accept track = true
+	registry.fill(HIST("TEST_RecoMatching_counter"), 27); // check process = true, accept track = true, search up to quark = false
+	//registry.fill(HIST("TEST_RecoMatching_counter"), 29); // check process = true, accept track = true, search up to quark = true
+ 
     // Match reconstructed candidates.
     for (const auto& candidate : *rowCandidateXic) {
       flag = 0;
@@ -694,26 +752,103 @@ struct HfCandidateCreatorXicToXiPiPiExpressions {
                                            candidate.negTrack_as<aod::TracksWMc>()};
       auto arrayDaughtersV0 = std::array{candidate.posTrack_as<aod::TracksWMc>(),
                                          candidate.negTrack_as<aod::TracksWMc>()};
+	
+	// --------- check Xi matching ----------- // independent from Xic+ matching
+	// 1) Without checkprocess
+	indexXi_wo_checkProcess = RecoDecay::getMatchedMCRec<false, false, false, true>(mcParticles, arrayDaughtersCasc, +kXiMinus, std::array{+kPiMinus, +kProton, +kPiMinus}, true, &sign, 2);
+	if(indexXi_wo_checkProcess > -1){
+		registry.fill(HIST("counter_withAndwithoutCheckProcess"), 1); 
+		RecoDecay::getDaughters(mcParticles.rawIteratorAt(indexXi_wo_checkProcess), &arrDaughXiIndex_wo_checkprocess, std::array{0}, 2);
+		for (auto iProng = 0u; iProng < arrDaughXiIndex_wo_checkprocess.size(); ++iProng) {
+			auto daughXiwoCP = mcParticles.rawIteratorAt(arrDaughXiIndex_wo_checkprocess[iProng]);
+			// fill histo for pdg id here
+			registry.fill(HIST("withoutCheckProcess_daughterOfXi"), daughXiwoCP.pdgCode()); 
+			if(std::abs(daughXiwoCP.pdgCode())==211){ registry.fill(HIST("pionpTfromXi_withoutCheckProcess"), daughXiwoCP.pt());}
+		}	
+	}	
+ 
+	// 2) With checkprocess
+	indexXi_w_checkProcess = RecoDecay::getMatchedMCRec<false, true, false, true>(mcParticles, arrayDaughtersCasc, +kXiMinus, std::array{+kPiMinus, +kProton, +kPiMinus}, true, &sign, 2);
+	if(indexXi_w_checkProcess > -1){
+		registry.fill(HIST("counter_withAndwithoutCheckProcess"), 3);  
+		RecoDecay::getDaughters(mcParticles.rawIteratorAt(indexXi_w_checkProcess), &arrDaughXiIndex_w_checkprocess, std::array{0}, 2);
+		for (auto iProng = 0u; iProng < arrDaughXiIndex_w_checkprocess.size(); ++iProng) {
+			auto daughXiwCP = mcParticles.rawIteratorAt(arrDaughXiIndex_w_checkprocess[iProng]);
+			// fill histo for pdg id here
+			registry.fill(HIST("withCheckProcess_daughterOfXi"), daughXiwCP.pdgCode());
+			if(std::abs(daughXiwCP.pdgCode())==211){ registry.fill(HIST("pionpTfromXi_withCheckProcess"), daughXiwCP.pt());}
+		}
+	}
 
+	// --------- check Xic+ matching ------------- //
+	// 1) without checkprocess
+	indexXicPlus_wo_checkprocess = RecoDecay::getMatchedMCRec<false, false, false, true>(mcParticles, arrayDaughters, Pdg::kXiCPlus, std::array{+kPiPlus, +kPiPlus, +kPiMinus, +kProton, +kPiMinus}, true, &sign, 4); 
+	if(indexXicPlus_wo_checkprocess > -1){
+		RecoDecay::getDaughters(mcParticles.rawIteratorAt(indexXicPlus_wo_checkprocess), &arrDaughXicIndex_wo_checkprocess, std::array{0}, 4);
+		for (auto iProng = 0u; iProng < arrDaughXicIndex_wo_checkprocess.size(); ++iProng) {
+			auto daughXicwoCP = mcParticles.rawIteratorAt(arrDaughXicIndex_wo_checkprocess[iProng]);
+			if(std::abs(daughXicwoCP.pdgCode())==211){ registry.fill(HIST("pionpTfromXic_withoutCheckProcess"), daughXicwoCP.pt());}
+		}
+	}	
+
+	// 2) with checkprocess
+	indexXicPlus_w_checkprocess = RecoDecay::getMatchedMCRec<false, true, false, true>(mcParticles, arrayDaughters, Pdg::kXiCPlus, std::array{+kPiPlus, +kPiPlus, +kPiMinus, +kProton, +kPiMinus}, true, &sign, 4);
+	if(indexXicPlus_w_checkprocess > -1){
+		RecoDecay::getDaughters(mcParticles.rawIteratorAt(indexXicPlus_w_checkprocess), &arrDaughXicIndex_w_checkprocess, std::array{0}, 4);
+		for (auto iProng = 0u; iProng < arrDaughXicIndex_w_checkprocess.size(); ++iProng) {
+			auto daughXicwCP = mcParticles.rawIteratorAt(arrDaughXicIndex_w_checkprocess[iProng]);
+			if(std::abs(daughXicwCP.pdgCode())==211){ registry.fill(HIST("pionpTfromXic_withCheckProcess"), daughXicwCP.pt());}
+		}
+	}
+	
       // Xic → pi pi pi pi p
+      //registry.fill(HIST("TEST_RecoMatching_counter"), 1);
+
       indexRec = RecoDecay::getMatchedMCRec<false, true, false, true>(mcParticles, arrayDaughters, Pdg::kXiCPlus, std::array{+kPiPlus, +kPiPlus, +kPiMinus, +kProton, +kPiMinus}, true, &sign, 4);
       indexRecXicPlus = indexRec;
       if (indexRec == -1) {
         debug = 1;
       }
       if (indexRec > -1) {
+		// check pT of pion in Xic matching
+		RecoDecay::getDaughters(mcParticles.rawIteratorAt(indexRec), &arrDaughXicIndex, std::array{0}, 4);
+		for (auto iProng = 0u; iProng < arrDaughXicIndex.size(); ++iProng) {
+			auto daughXicI = mcParticles.rawIteratorAt(arrDaughXicIndex[iProng]);
+			if(std::abs(daughXicI.pdgCode())==211){
+				registry.fill(HIST("pionpT_inXicMatchingLoop"), daughXicI.pt());
+			}
+		}
         // Xi- → pi pi p
-        indexRec = RecoDecay::getMatchedMCRec<false, true, false, true>(mcParticles, arrayDaughtersCasc, +kXiMinus, std::array{+kPiMinus, +kProton, +kPiMinus}, true, &sign, 2);
+        registry.fill(HIST("TEST_RecoMatching_counter"), 3);
+        indexRec = RecoDecay::getMatchedMCRec<false, false, false, true>(mcParticles, arrayDaughtersCasc, +kXiMinus, std::array{+kPiMinus, +kProton, +kPiMinus}, true, &sign, 2);
         if (indexRec == -1) {
           debug = 2;
         }
         if (indexRec > -1) {
+          registry.fill(HIST("TEST_RecoMatching_counter"), 5);
+		  // check pT of pion in Xi matching
+		  RecoDecay::getDaughters(mcParticles.rawIteratorAt(indexRec), &arrDaughXiIndex, std::array{0}, 2);
+		  for (auto iProng = 0u; iProng < arrDaughXiIndex.size(); ++iProng) {
+			  auto daughXiI = mcParticles.rawIteratorAt(arrDaughXiIndex[iProng]);
+			  if(std::abs(daughXiI.pdgCode())==211){
+				  registry.fill(HIST("pionpT_inXiMatchingLoop"), daughXiI.pt());
+			  }
+		  }
           // Lambda → p pi
           indexRec = RecoDecay::getMatchedMCRec<false, true, false, true>(mcParticles, arrayDaughtersV0, +kLambda0, std::array{+kProton, +kPiMinus}, true, &sign, 1);
           if (indexRec == -1) {
             debug = 3;
           }
           if (indexRec > -1) {
+            registry.fill(HIST("TEST_RecoMatching_counter"), 7);
+			// find L daughters from lambda's index
+			RecoDecay::getDaughters(mcParticles.rawIteratorAt(indexRec), &arrDaughLambdaIndex, std::array{0}, 1);
+			for (auto iProng = 0u; iProng < arrDaughLambdaIndex.size(); ++iProng) {
+				auto daughLambdaI = mcParticles.rawIteratorAt(arrDaughLambdaIndex[iProng]);
+				if(std::abs(daughLambdaI.pdgCode())==211){
+					registry.fill(HIST("pionpT_inLambdaMatchingLoop"), daughLambdaI.pt());
+				}
+			}
             RecoDecay::getDaughters(mcParticles.rawIteratorAt(indexRecXicPlus), &arrDaughIndex, std::array{0}, 1);
             if (arrDaughIndex.size() == 2) {
               for (auto iProng = 0u; iProng < arrDaughIndex.size(); ++iProng) {
@@ -722,11 +857,13 @@ struct HfCandidateCreatorXicToXiPiPiExpressions {
               }
               if ((arrPDGDaugh[0] == arrXiResonance[0] && arrPDGDaugh[1] == arrXiResonance[1]) || (arrPDGDaugh[0] == arrXiResonance[1] && arrPDGDaugh[1] == arrXiResonance[0])) {
                 flag = sign * (1 << aod::hf_cand_xic_to_xi_pi_pi::DecayType::XicToXiResPiToXiPiPi);
+                registry.fill(HIST("TEST_RecoMatching_counter"), 16);
               } else {
                 debug = 4;
               }
             } else {
               flag = sign * (1 << aod::hf_cand_xic_to_xi_pi_pi::DecayType::XicToXiPiPi);
+              registry.fill(HIST("TEST_RecoMatching_counter"), 18);
             }
           }
         }
@@ -736,6 +873,7 @@ struct HfCandidateCreatorXicToXiPiPiExpressions {
       if (flag != 0) {
         auto particle = mcParticles.rawIteratorAt(indexRecXicPlus);
         origin = RecoDecay::getCharmHadronOrigin(mcParticles, particle, false);
+		registry.fill(HIST("TEST_Origin"), origin);
       }
 
       rowMcMatchRec(flag, debug, origin);
