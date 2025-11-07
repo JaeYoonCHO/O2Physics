@@ -362,7 +362,7 @@ struct HfTreeCreatorXicToXiPiPi {
   using SelectedCandidatesKfMc = soa::Filtered<soa::Join<aod::HfCandXic, aod::HfCandXicKF, aod::HfCandXicMcRec, aod::HfSelXicToXiPiPi>>;
   using MatchedGenXicToXiPiPi = soa::Filtered<soa::Join<aod::McParticles, aod::HfCandXicMcGen>>;
 
-  Filter filterSelectCandidates = aod::hf_sel_candidate_xic::isSelXicToXiPiPi >= selectionFlagXic;
+  Filter filterSelectCandidates = (aod::hf_sel_candidate_xic::isSelXicToXiPiPi & selectionFlagXic) == selectionFlagXic;
   Filter filterGenXicToXiPiPi = (nabs(aod::hf_cand_xic_to_xi_pi_pi::flagMcMatchGen) == static_cast<int8_t>(BIT(aod::hf_cand_xic_to_xi_pi_pi::DecayType::XicToXiPiPi)) || nabs(aod::hf_cand_xic_to_xi_pi_pi::flagMcMatchGen) == static_cast<int8_t>(BIT(aod::hf_cand_xic_to_xi_pi_pi::DecayType::XicToXiResPiToXiPiPi)));
 
   Partition<SelectedCandidatesMc> recSig = nabs(aod::hf_cand_xic_to_xi_pi_pi::flagMcMatchRec) != int8_t(0);

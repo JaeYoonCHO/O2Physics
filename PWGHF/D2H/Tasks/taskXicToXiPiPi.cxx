@@ -73,7 +73,7 @@ struct HfTaskXicToXiPiPi {
 
   Service<o2::framework::O2DatabasePDG> pdg;
 
-  Filter filterSelectCandidates = (aod::hf_sel_candidate_xic::isSelXicToXiPiPi >= selectionFlagXic);
+  Filter filterSelectCandidates = ((aod::hf_sel_candidate_xic::isSelXicToXiPiPi & selectionFlagXic) == selectionFlagXic);
 
   // Axis
   ConfigurableAxis thnConfigAxisPt{"thnConfigAxisPt", {400, 0., 40.}, ""};
