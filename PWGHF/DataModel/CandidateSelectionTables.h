@@ -333,6 +333,7 @@ enum XicToXiPiPiSelectionStep {
   RecoTrackQuality,
   RecoPID,
   RecoMl,
+  RecoReducedCut,
   NSelectionSteps
 };
 } // namespace hf_sel_candidate_xic

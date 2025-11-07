@@ -56,6 +56,7 @@ struct HfCandidateSelectorXicToXiPiPi {
   Configurable<std::vector<double>> binsPt{"binsPt", std::vector<double>{hf_cuts_xic_to_xi_pi_pi::vecBinsPt}, "pT bin limits"};
   Configurable<LabeledArray<double>> cuts{"cuts", {hf_cuts_xic_to_xi_pi_pi::Cuts[0], hf_cuts_xic_to_xi_pi_pi::NBinsPt, hf_cuts_xic_to_xi_pi_pi::NCutVars, hf_cuts_xic_to_xi_pi_pi::labelsPt, hf_cuts_xic_to_xi_pi_pi::labelsCutVar}, "Xicplus candidate selection per pT bin"};
   Configurable<bool> fillQAHistograms{"fillQAHistograms", false, "Switch to enable filling of QA histograms"};
+  Configurable<bool> useReducedOutputCuts{"useReducedOutputCuts", false, "Switch to enable reduced output cuts"};
   // Enable PID
   Configurable<bool> usePid{"usePid", true, "Switch for PID selection at track level"};
   Configurable<bool> useTpcPidOnly{"useTpcPidOnly", false, "Switch to use TPC PID only instead of TPC OR TOF)"};
@@ -529,6 +530,14 @@ struct HfCandidateSelectorXicToXiPiPi {
 
     // Successful kinematic and topological selection
     SETBIT(statusXicToXiPiPi, hf_sel_candidate_xic::XicToXiPiPiSelectionStep::RecoKinTopol); // RecoKinTopol = 1 --> statusXicToXiPiPi += 2
+
+    // Reduced cut
+    if (useReducedOutputCuts) {
+      if((std::abs(hfCandXic.y(o2::constants::physics::MassXiCPlus)) > 0.8) || (hfCandXic.pt() < 2) || (trackPi0.pt() < 0.4) || (trackPi1.pt() < 0.4)) {
+        return false;
+      }
+    } 
+    SETBIT(statusXicToXiPiPi, hf_sel_candidate_xic::XicToXiPiPiSelectionStep::RecoReducedCut); // RecoReducedCut = 5 --> statusXicToXiPiPi += 32 
 
     ////////////////////////////////////////////////
     //          Track quality selection           //
