@@ -57,6 +57,7 @@ struct HfCandidateSelectorXicToXiPiPi {
   Configurable<LabeledArray<double>> cuts{"cuts", {hf_cuts_xic_to_xi_pi_pi::Cuts[0], hf_cuts_xic_to_xi_pi_pi::NBinsPt, hf_cuts_xic_to_xi_pi_pi::NCutVars, hf_cuts_xic_to_xi_pi_pi::labelsPt, hf_cuts_xic_to_xi_pi_pi::labelsCutVar}, "Xicplus candidate selection per pT bin"};
   Configurable<bool> fillQAHistograms{"fillQAHistograms", false, "Switch to enable filling of QA histograms"};
   Configurable<bool> useReducedOutputCuts{"useReducedOutputCuts", false, "Switch to enable reduced output cuts"};
+  Configurable<float> ptXicMin{"ptXicMin", 0,"Minumum pT of Xic candidates. Applied only useReducedOutputCuts is enabled"};
   // Enable PID
   Configurable<bool> usePid{"usePid", true, "Switch for PID selection at track level"};
   Configurable<bool> useTpcPidOnly{"useTpcPidOnly", false, "Switch to use TPC PID only instead of TPC OR TOF)"};
@@ -533,7 +534,7 @@ struct HfCandidateSelectorXicToXiPiPi {
 
     // Reduced cut
     if (useReducedOutputCuts) {
-      if((std::abs(hfCandXic.y(o2::constants::physics::MassXiCPlus)) > 0.8) || (hfCandXic.pt() < 2) || (trackPi0.pt() < 0.4) || (trackPi1.pt() < 0.4)) {
+      if((std::abs(hfCandXic.y(o2::constants::physics::MassXiCPlus)) > cuts->get(pTBin, "y")) || (hfCandXic.pt() < ptXicMin) || (trackPi0.pt() < cuts->get(pTBin, "pT Pi0")) || (trackPi1.pt() < cuts->get(pTBin, "pT Pi1"))) {
         return false;
       }
     } 
