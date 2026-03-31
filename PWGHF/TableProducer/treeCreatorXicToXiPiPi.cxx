@@ -78,9 +78,9 @@ DECLARE_SOA_COLUMN(PtPi1, ptPi1, float);                                        
 DECLARE_SOA_COLUMN(ImpactParameterPi1, impactParameterPi1, float);                     //! Normalised impact parameter of Pi1 (prong2)
 DECLARE_SOA_COLUMN(ImpactParameterNormalisedPi1, impactParameterNormalisedPi1, float); //! Normalised impact parameter of Pi1 (prong2)
 DECLARE_SOA_COLUMN(MaxNormalisedDeltaIP, maxNormalisedDeltaIP, float);                 //! Maximum normalized difference between measured and expected impact parameter of candidate prongs
-DECLARE_SOA_COLUMN(MlScoreBkg, mlScoreBkg, float);                //! ML score for background class
-DECLARE_SOA_COLUMN(MlScorePrompt, mlScorePrompt, float);          //! ML score for prompt signal class
-DECLARE_SOA_COLUMN(MlScoreNonPrompt, mlScoreNonPrompt, float);    //! ML score for non-prompt signal class (3-class model only, -1 otherwise)
+DECLARE_SOA_COLUMN(MlScoreBkg, mlScoreBkg, float);                                     //! ML score for background class
+DECLARE_SOA_COLUMN(MlScorePrompt, mlScorePrompt, float);                               //! ML score for prompt signal class
+DECLARE_SOA_COLUMN(MlScoreNonPrompt, mlScoreNonPrompt, float);                         //! ML score for non-prompt signal class (3-class model only, -1 otherwise)
 } // namespace full
 
 DECLARE_SOA_TABLE(HfCandXicToXiPiPiLites, "AOD", "HFXICXI2PILITE",
@@ -410,7 +410,7 @@ struct HfTreeCreatorXicToXiPiPi {
   void init(InitContext const&)
   {
     std::array<bool, 6> doprocess{doprocessData, doprocessDataKf, doprocessDataWithML, doprocessMc, doprocessMcKf, doprocessMcWithML};
-    if (std::accumulate(doprocess.begin(), doprocess.end(),0) != 1) {
+    if (std::accumulate(doprocess.begin(), doprocess.end(), 0) != 1) {
       LOGP(fatal, "Only one process function can be enabled at a time.");
     }
   }
@@ -688,35 +688,35 @@ struct HfTreeCreatorXicToXiPiPi {
         }
       }
       rowCandidateLiteMl(
-          particleFlag,
-          originMc,
-          candidate.isSelXicToXiPiPi(),
-          candidate.y(o2::constants::physics::MassXiCPlus),
-          candidate.eta(),
-          candidate.phi(),
-          candidate.p(),
-          candidate.pt(),
-          candidate.invMassXicPlus(),
-          candidate.invMassXi(),
-          candidate.invMassLambda(),
-          candidate.decayLength(),
-          candidate.decayLengthXY(),
-          candidate.cpa(),
-          candidate.cpaXY(),
-          candidate.cpaXi(),
-          candidate.cpaXYXi(),
-          candidate.cpaLambda(),
-          candidate.cpaXYLambda(),
-          candidate.impactParameter0(),
-          candidate.impactParameterNormalised0(),
-          candidate.impactParameter1(),
-          candidate.impactParameterNormalised1(),
-          candidate.impactParameter2(),
-          candidate.impactParameterNormalised2(),
-          candidate.maxNormalisedDeltaIP(),
-          mlScoreBkg,
-          mlScorePrompt,
-          mlScoreNonPrompt);
+        particleFlag,
+        originMc,
+        candidate.isSelXicToXiPiPi(),
+        candidate.y(o2::constants::physics::MassXiCPlus),
+        candidate.eta(),
+        candidate.phi(),
+        candidate.p(),
+        candidate.pt(),
+        candidate.invMassXicPlus(),
+        candidate.invMassXi(),
+        candidate.invMassLambda(),
+        candidate.decayLength(),
+        candidate.decayLengthXY(),
+        candidate.cpa(),
+        candidate.cpaXY(),
+        candidate.cpaXi(),
+        candidate.cpaXYXi(),
+        candidate.cpaLambda(),
+        candidate.cpaXYLambda(),
+        candidate.impactParameter0(),
+        candidate.impactParameterNormalised0(),
+        candidate.impactParameter1(),
+        candidate.impactParameterNormalised1(),
+        candidate.impactParameter2(),
+        candidate.impactParameterNormalised2(),
+        candidate.maxNormalisedDeltaIP(),
+        mlScoreBkg,
+        mlScorePrompt,
+        mlScoreNonPrompt);
     }
   }
 
